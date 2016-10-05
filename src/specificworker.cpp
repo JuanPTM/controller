@@ -46,6 +46,12 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
+void SpecificWorker::setPick(const Pick &mypick){
+  qDebug()<<"Recibido mypick";
+  qDebug()<<mypick.x<<mypick.z;
+  pick.copy(mypick.x,mypick.z);
+}
+
 void SpecificWorker::compute()
 {
     const float threshold = 420; //millimeters
