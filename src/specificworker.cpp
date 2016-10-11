@@ -51,6 +51,7 @@ void SpecificWorker::setPick(const Pick &mypick){
   qDebug()<<mypick.x<<mypick.z;
   pick.copy(mypick.x,mypick.z);
   pick.setActive(true);
+  enfocado=false;
 }
 
 void SpecificWorker::compute()
@@ -76,44 +77,48 @@ void SpecificWorker::compute()
 	  float targetX = pick.getPose().getItem(0);
 	  float targetZ = pick.getPose().getItem(1);
 	  float baseX = bState.x;
-	  float baseZ = -bState.z;
+	  float baseZ = bState.z;
+	  
+	  float M[2][2];
+	  M[0][0] = cos(baseAngle);
+	  M[1][0]= sin(baseAngle);
+	  M[0][1]= -sin(baseAngle);
+	  M[1][1]= cos(baseAngle);
+	  float Tr[2];
+	  Tr[0] = M[0][0] * (targetX - baseX) + M[0][1]* (targetZ - baseZ);  
+	  Tr[1] = M[1][0] * (targetX - baseX) + M[1][1]* (targetZ - baseZ);
+	  
+	  float angle = atan2(Tr[0],Tr[1]);
 	  if(!enfocado)
 	  {
-	    float M[2][2];
-	    M[0][0] = cos(baseAngle);
-	    M[1][0]= -sin(baseAngle);
-	    M[0][1]= sin(baseAngle);
-	    M[1][1]= cos(baseAngle);
-	    float Tr[2];
-	    Tr[0] = M[0][0] * (targetX -baseX) + M[0][1]* (targetZ -baseZ);  
-	    Tr[1] = M[1][0] * (targetX - baseX) + M[1][1]*(targetZ -baseZ);
+
+	    qDebug()<<angle<<"Angulo angle";
 	  
-	    float angle = atan2(Tr[0],Tr[1]);
-	    qDebug()<<angle <<"Angulo angle";
-	  
-	    if (angle >= 3.10)
+	    if (abs(angle) <= 0.05)
 	    {
 	      differentialrobot_proxy->stopBase();
 	      enfocado = true;
 	    }else
 	      if(angle >0)
-		differentialrobot_proxy->setSpeedBase(0,rot);
+		differentialrobot_proxy->setSpeedBase(0,rot*angle);
 	      else
-		differentialrobot_proxy->setSpeedBase(0,-rot);
+		differentialrobot_proxy->setSpeedBase(0,rot*angle);
 	  }
 	  
 	  if (enfocado)
 	  {
 	    double x = (targetX-baseX);
-	    double z = (targetZ-baseZ);
+	    double z = (targetZ-baseZ); //TODO pow, y eliminar qDebug.
 	    double distance = sqrt((x*x)+(z*z));
 	    qDebug()<<distance<<targetX<<baseX<<x<<targetZ<<baseZ<<z;
-	    differentialrobot_proxy->setSpeedBase(200,0);
+	    differentialrobot_proxy->setSpeedBase(distance*0.5,0);
 	    if (distance<= threshold/2)
 	    {
 	      pick.setActive(false);
 	      enfocado = false;
  	      differentialrobot_proxy->stopBase();
+	      float giro =((angle+baseAngle)%(6.28));
+	      qDebug()<<giro;
 	    }
 	  }
 	}
