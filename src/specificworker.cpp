@@ -50,20 +50,74 @@ void SpecificWorker::setPick(const Pick &mypick){
   qDebug()<<"Recibido mypick";
   qDebug()<<mypick.x<<mypick.z;
   pick.copy(mypick.x,mypick.z);
+  pick.setActive(true);
 }
 
 void SpecificWorker::compute()
 {
+    
     const float threshold = 420; //millimeters
     float rot = 0.6;  //rads per second
  
 // 400 x 400
     try
     {
+      
+      
         RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data
         std::sort( ldata.begin()+8, ldata.end()-8, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
 
-    if( ldata[8].dist < threshold)
+        RoboCompDifferentialRobot::TBaseState bState;
+	
+        if(pick.active)
+	{
+	  differentialrobot_proxy->getBaseState( bState);
+	  float baseAngle=bState.alpha;
+	  float targetX = pick.getPose().getItem(0);
+	  float targetZ = pick.getPose().getItem(1);
+	  float baseX = bState.x;
+	  float baseZ = -bState.z;
+	  if(!enfocado)
+	  {
+	    float M[2][2];
+	    M[0][0] = cos(baseAngle);
+	    M[1][0]= -sin(baseAngle);
+	    M[0][1]= sin(baseAngle);
+	    M[1][1]= cos(baseAngle);
+	    float Tr[2];
+	    Tr[0] = M[0][0] * (targetX -baseX) + M[0][1]* (targetZ -baseZ);  
+	    Tr[1] = M[1][0] * (targetX - baseX) + M[1][1]*(targetZ -baseZ);
+	  
+	    float angle = atan2(Tr[0],Tr[1]);
+	    qDebug()<<angle <<"Angulo angle";
+	  
+	    if (angle >= 3.10)
+	    {
+	      differentialrobot_proxy->stopBase();
+	      enfocado = true;
+	    }else
+	      if(angle >0)
+		differentialrobot_proxy->setSpeedBase(0,rot);
+	      else
+		differentialrobot_proxy->setSpeedBase(0,-rot);
+	  }
+	  
+	  if (enfocado)
+	  {
+	    double x = (targetX-baseX);
+	    double z = (targetZ-baseZ);
+	    double distance = sqrt((x*x)+(z*z));
+	    qDebug()<<distance<<targetX<<baseX<<x<<targetZ<<baseZ<<z;
+	    differentialrobot_proxy->setSpeedBase(200,0);
+	    if (distance<= threshold/2)
+	    {
+	      pick.setActive(false);
+	      enfocado = false;
+ 	      differentialrobot_proxy->stopBase();
+	    }
+	  }
+	}
+    /*if( ldata[8].dist < threshold)
     {
         std::cout << ldata[8].dist << std::endl;
 	if (ldata[8].angle > 0)
@@ -80,7 +134,7 @@ void SpecificWorker::compute()
     else
     {
         differentialrobot_proxy->setSpeedBase(300, 0);
-    }
+    }*/
     }
     catch(const Ice::Exception &ex)
     {
