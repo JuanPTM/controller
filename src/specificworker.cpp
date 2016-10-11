@@ -89,36 +89,35 @@ void SpecificWorker::compute()
 	  Tr[1] = M[1][0] * (targetX - baseX) + M[1][1]* (targetZ - baseZ);
 	  
 	  float angle = atan2(Tr[0],Tr[1]);
+	  double x = (targetX-baseX);
+	  double z = (targetZ-baseZ);
+	  double distance = sqrt((x*x)+(z*z));
+	  //TODO pow, y eliminar qDebug.
+	  //TODO calcular avance y hacerlo en un if (frenandose al avanzar)
+	  
 	  if(!enfocado)
 	  {
 
 	    qDebug()<<angle<<"Angulo angle";
 	  
-	    if (abs(angle) <= 0.05)
+	    if (abs(angle) <= 0.005)
 	    {
 	      differentialrobot_proxy->stopBase();
 	      enfocado = true;
 	    }else
-	      if(angle >0)
-		differentialrobot_proxy->setSpeedBase(0,rot*angle);
-	      else
 		differentialrobot_proxy->setSpeedBase(0,rot*angle);
 	  }
 	  
 	  if (enfocado)
 	  {
-	    double x = (targetX-baseX);
-	    double z = (targetZ-baseZ); //TODO pow, y eliminar qDebug.
-	    double distance = sqrt((x*x)+(z*z));
-	    qDebug()<<distance<<targetX<<baseX<<x<<targetZ<<baseZ<<z;
+	     
 	    differentialrobot_proxy->setSpeedBase(distance*0.5,0);
 	    if (distance<= threshold/2)
 	    {
 	      pick.setActive(false);
 	      enfocado = false;
  	      differentialrobot_proxy->stopBase();
-	      float giro =((angle+baseAngle)%(6.28));
-	      qDebug()<<giro;
+	      differentialrobot_proxy->getBaseState( bState);
 	    }
 	  }
 	}
