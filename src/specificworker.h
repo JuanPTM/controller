@@ -71,7 +71,6 @@ public slots:
 
 private:
 	Target pick;
-	bool enfocado = false;
 	
 };
 

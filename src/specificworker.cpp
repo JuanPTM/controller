@@ -51,7 +51,6 @@ void SpecificWorker::setPick(const Pick &mypick){
   qDebug()<<mypick.x<<mypick.z;
   pick.copy(mypick.x,mypick.z);
   pick.setActive(true);
-  enfocado=false;
 }
 
 void SpecificWorker::compute()
@@ -92,33 +91,31 @@ void SpecificWorker::compute()
 	  double x = (targetX-baseX);
 	  double z = (targetZ-baseZ);
 	  double distance = sqrt((x*x)+(z*z));
-	  //TODO pow, y eliminar qDebug.
 	  //TODO calcular avance y hacerlo en un if (frenandose al avanzar)
 	  
-	  if(!enfocado)
-	  {
-
-	    qDebug()<<angle<<"Angulo angle";
+	  qDebug()<<angle<<"Angulo angle";
 	  
-	    if (abs(angle) <= 0.005)
-	    {
-	      differentialrobot_proxy->stopBase();
-	      enfocado = true;
-	    }else
-		differentialrobot_proxy->setSpeedBase(0,rot*angle);
-	  }
-	  
-	  if (enfocado)
+	  if (abs(angle) <= 0.005)
 	  {
-	     
 	    differentialrobot_proxy->setSpeedBase(distance*0.5,0);
-	    if (distance<= threshold/2)
-	    {
+	  }else
+	    differentialrobot_proxy->setSpeedBase(0,rot*angle);
+	  
+	  if (distance<= threshold/2)
+	  {
 	      pick.setActive(false);
-	      enfocado = false;
  	      differentialrobot_proxy->stopBase();
+	     /*
 	      differentialrobot_proxy->getBaseState( bState);
-	    }
+	      float angle2 = atan2(bState.z,bState.x);
+	      qDebug()<<angle2<<"Angle2";
+	      while (abs(angle2) == 90)
+	      {
+		differentialrobot_proxy->setSpeedBase(0,rot);
+		differentialrobot_proxy->getBaseState( bState);
+		angle2 = atan2(bState.z,bState.x);
+		qDebug()<<angle2<<"Angle2";
+	      }*/ //TODO intento enfoque alpha=0
 	  }
 	}
     /*if( ldata[8].dist < threshold)
