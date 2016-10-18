@@ -71,6 +71,7 @@ public slots:
 
 private:
 	Target pick;
+void dodge(int threshold,RoboCompLaser::TLaserData ldata);
 	
 };
 

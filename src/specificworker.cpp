@@ -46,6 +46,45 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
+void SpecificWorker::dodge(int threshold, TLaserData ldata)
+{
+/*
+    if ( ldata[8].dist < threshold)
+    {
+        std::cout << ldata[8].dist << std::endl;
+	if (ldata[8].angle > 0)
+	{
+	  differentialrobot_proxy->setSpeedBase(5, -rot);
+	  usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
+	}else
+	{  
+	  differentialrobot_proxy->setSpeedBase(5, rot);
+	  usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
+	}
+	  
+    }
+    else
+    {
+        differentialrobot_proxy->setSpeedBase(300, 0);
+    }*/
+    float rot = 0.6;
+
+        if ( ldata[8].dist < threshold)
+	{
+	  std::cout << ldata[8].dist << std::endl;
+	  if (ldata[8].angle > 0)
+	  {
+	    differentialrobot_proxy->setSpeedBase(5, -rot);
+	    usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
+	  }else
+	  {  
+	    differentialrobot_proxy->setSpeedBase(5, rot);
+	    usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
+	  }
+	  
+	}
+}
+
 void SpecificWorker::setPick(const Pick &mypick){
   qDebug()<<"Recibido mypick";
   qDebug()<<mypick.x<<mypick.z;
@@ -64,13 +103,14 @@ void SpecificWorker::compute()
     {
       
       
-        RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data
-        std::sort( ldata.begin()+8, ldata.end()-8, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
+	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data
+	std::sort( ldata.begin()+8, ldata.end()-8, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
 
         RoboCompDifferentialRobot::TBaseState bState;
 	
         if(pick.active)
 	{
+	  
 	  differentialrobot_proxy->getBaseState( bState);
 	  float baseAngle=bState.alpha;
 	  float targetX = pick.getPose().getItem(0);
@@ -97,6 +137,10 @@ void SpecificWorker::compute()
 	  
 	  if (abs(angle) <= 0.005)
 	  {
+	    if(ldata[8].dist < threshold)
+	    {
+	      dodge(threshold,ldata);
+	    }
 	    differentialrobot_proxy->setSpeedBase(distance*0.5,0);
 	  }else
 	    differentialrobot_proxy->setSpeedBase(0,rot*angle);
@@ -118,24 +162,6 @@ void SpecificWorker::compute()
 	      }*/ //TODO intento enfoque alpha=0
 	  }
 	}
-    /*if( ldata[8].dist < threshold)
-    {
-        std::cout << ldata[8].dist << std::endl;
-	if (ldata[8].angle > 0)
-	{
-	  differentialrobot_proxy->setSpeedBase(5, -rot);
-	  usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
-	}else
-	{  
-	  differentialrobot_proxy->setSpeedBase(5, rot);
-	  usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
-	}
-	  
-    }
-    else
-    {
-        differentialrobot_proxy->setSpeedBase(300, 0);
-    }*/
     }
     catch(const Ice::Exception &ex)
     {
