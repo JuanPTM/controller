@@ -23,7 +23,7 @@
 */
 SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
-
+    state = State::INIT;
 }
 
 /**
@@ -39,7 +39,7 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 
 
-	
+	innerModel= new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
 	timer.start(Period);
 	
 
@@ -85,8 +85,39 @@ void SpecificWorker::dodge(int threshold, TLaserData ldata)
 	}
 }
 
+void SpecificWorker::movement(const TLaserData &tLaser)
+{
+  if (obstacle(tLaser))
+  {
+    state=State::BUG;
+    return;
+  }
+  
+  QVec tr = innerModel->transform("robot",pick.getPose(),"world");
+
+
+  float angle = atan2(tr.x(),tr.z());
+  float distance = tr.norm2();
+      
+  qDebug()<<angle<<"Angulo angle";
+  
+  if (abs(angle) <= 0.005)
+  {
+    if(distance >= 500)
+      distance = 500;
+    differentialrobot_proxy->setSpeedBase(distance,0);
+  }else
+    differentialrobot_proxy->setSpeedBase(0,0.6*angle);
+  
+  if (distance<= 100)
+  {
+      pick.setActive(false);
+      state= State::INIT;
+      differentialrobot_proxy->stopBase();
+  }
+}
+
 void SpecificWorker::setPick(const Pick &mypick){
-  qDebug()<<"Recibido mypick";
   qDebug()<<mypick.x<<mypick.z;
   pick.copy(mypick.x,mypick.z);
   pick.setActive(true);
@@ -94,6 +125,7 @@ void SpecificWorker::setPick(const Pick &mypick){
 
 void SpecificWorker::compute()
 {
+    
     
     const float threshold = 420; //millimeters
     float rot = 0.6;  //rads per second
@@ -104,14 +136,38 @@ void SpecificWorker::compute()
       
       
 	RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data
-	std::sort( ldata.begin()+8, ldata.end()-8, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
-
-        RoboCompDifferentialRobot::TBaseState bState;
 	
+        RoboCompDifferentialRobot::TBaseState bState;
+	differentialrobot_proxy->getBaseState( bState);
+	innerModel->updateTransformValues("robot",bState.x,0,bState.z,0,bState.alpha,0);
+	
+	switch(state)
+	{
+	  case State::INIT:
+	    if(pick.active)
+	      state=State::GOTO;
+	    break;
+	  case State::GOTO:
+	    movement(ldata);
+	    break;
+	  case State::BUG:
+	    bugMovement(ldata);
+	    qDebug()<<"Bug State";
+	    break;
+	  case State::END:
+	    break;
+	}
+	
+	
+	
+	
+	
+	
+	/*
         if(pick.active)
 	{
 	  
-	  differentialrobot_proxy->getBaseState( bState);
+	  
 	  float baseAngle=bState.alpha;
 	  float targetX = pick.getPose().getItem(0);
 	  float targetZ = pick.getPose().getItem(1);
@@ -149,24 +205,34 @@ void SpecificWorker::compute()
 	  {
 	      pick.setActive(false);
  	      differentialrobot_proxy->stopBase();
-	     /*
-	      differentialrobot_proxy->getBaseState( bState);
-	      float angle2 = atan2(bState.z,bState.x);
-	      qDebug()<<angle2<<"Angle2";
-	      while (abs(angle2) == 90)
-	      {
-		differentialrobot_proxy->setSpeedBase(0,rot);
-		differentialrobot_proxy->getBaseState( bState);
-		angle2 = atan2(bState.z,bState.x);
-		qDebug()<<angle2<<"Angle2";
-	      }*/ //TODO intento enfoque alpha=0
 	  }
-	}
+	} */
     }
     catch(const Ice::Exception &ex)
     {
         std::cout << ex << std::endl;
     }
+}
+
+bool SpecificWorker::obstacle(TLaserData tLaser)
+{
+  std::sort( tLaser.begin()+35, tLaser.end()-35, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
+
+  return (tLaser[35].dist < 100);
+}
+
+void SpecificWorker::bugMovement(TLaserData ldata)
+{
+
+  QPolygon poly;
+  for(auto l: ldata)
+  {
+    QVec r = innerModel->laserTo("world","laser",l.dist,l.angle);
+    QPoint p(r.x(),r.z());
+    poly<<p;
+  }
+  
+  
 }
 
 

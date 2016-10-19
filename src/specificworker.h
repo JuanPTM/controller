@@ -41,7 +41,7 @@ class SpecificWorker : public GenericWorker
   
 struct Target{
   mutable QMutex m;
-  QVec pose = QVec(2);
+  QVec pose = QVec(3);
   float angl;
   bool active = false;
   void setActive(bool newActive){
@@ -51,13 +51,16 @@ struct Target{
   void copy(float x, float z){
     QMutexLocker lm(&m);
     pose.setItem(0,x);
-    pose.setItem(1,z);
+    pose.setItem(1,0);
+    pose.setItem(2,z);
   }
   QVec getPose(){
     QMutexLocker lm(&m);
     return pose;
   }
 };
+
+enum class State{INIT,GOTO,BUG,END};
 
 Q_OBJECT
 public:
@@ -70,9 +73,13 @@ public slots:
 	void compute(); 	
 
 private:
+	InnerModel* innerModel;
+	State state;
 	Target pick;
-void dodge(int threshold,RoboCompLaser::TLaserData ldata);
-	
+	void dodge(int threshold,RoboCompLaser::TLaserData ldata);
+	void movement(const TLaserData &tLaser);
+bool obstacle(TLaserData tLaser);
+void bugMovement(TLaserData ldata);
 };
 
 #endif
