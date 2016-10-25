@@ -93,7 +93,7 @@ void SpecificWorker::movement(const TLaserData &tLaser)
     return;
   }
   
-  QVec tr = innerModel->transform("robot",pick.getPose(),"world");
+  QVec tr = innerModel->transform("base",pick.getPose(),"world");
 
 
   float angle = atan2(tr.x(),tr.z());
@@ -139,7 +139,7 @@ void SpecificWorker::compute()
 	
         RoboCompDifferentialRobot::TBaseState bState;
 	differentialrobot_proxy->getBaseState( bState);
-	innerModel->updateTransformValues("robot",bState.x,0,bState.z,0,bState.alpha,0);
+	innerModel->updateTransformValues("base",bState.x,0,bState.z,0,bState.alpha,0);
 	
 	switch(state)
 	{
@@ -223,18 +223,35 @@ bool SpecificWorker::obstacle(TLaserData tLaser)
 
 void SpecificWorker::bugMovement(TLaserData ldata)
 {
+  float vr;
+  const float alpha = ;
+  if(targetAtSight(ldata)){
+    state = State::GOTO;
+  }
+  
+  float dist = ldata[10].dist;
+  if(dist>150)
+    vr = 0.2;
+  if(dist<150)
+    vr = -0.2; //TODO dependencia de dist dist*k \ k es posible que que sea 0,001
+  float v = 250* exp(-(abs(vr)*alpha)); //TODO gausiana  e^-||x||*a ->  despejar alpha || QLin2D
+  
+    
+  
+}
 
+bool SpecificWorker::targetAtSight(TLaserData ldata)
+{
   QPolygon poly;
   for(auto l: ldata)
   {
     QVec r = innerModel->laserTo("world","laser",l.dist,l.angle);
     QPoint p(r.x(),r.z());
     poly<<p;
+  
   }
-  
-  
+  return poly.containsPoint(QPoint(pick.getPose().x(),pick.getPose().z()), Qt::OddEvenFill );
 }
-
 
 
 
