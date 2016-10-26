@@ -105,7 +105,7 @@ void SpecificWorker::movement(const TLaserData &tLaser)
   {
     if(distance >= 500)
       distance = 500;
-    differentialrobot_proxy->setSpeedBase(distance,0);
+    differentialrobot_proxy->setSpeedBase(250,0);
   }else
     differentialrobot_proxy->setSpeedBase(0,0.6*angle);
   
@@ -144,6 +144,7 @@ void SpecificWorker::compute()
 	switch(state)
 	{
 	  case State::INIT:
+	    qDebug()<<ldata[90].dist;
 	    if(pick.active)
 	      state=State::GOTO;
 	    break;
@@ -218,24 +219,28 @@ bool SpecificWorker::obstacle(TLaserData tLaser)
 {
   std::sort( tLaser.begin()+35, tLaser.end()-35, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
 
-  return (tLaser[35].dist < 100);
+  return (tLaser[35].dist < 400);
 }
 
 void SpecificWorker::bugMovement(TLaserData ldata)
 {
-  float vr;
-  const float alpha = ;
+  float vr=0;
+  const float alpha = log(0.1) /log(0.2); //amortigua /corte
   if(targetAtSight(ldata)){
     state = State::GOTO;
+    return;
   }
   
-  float dist = ldata[10].dist;
-  if(dist>150)
-    vr = 0.2;
-  if(dist<150)
-    vr = -0.2; //TODO dependencia de dist dist*k \ k es posible que que sea 0,001
-  float v = 250* exp(-(abs(vr)*alpha)); //TODO gausiana  e^-||x||*a ->  despejar alpha || QLin2D
+  float dist = ldata[90].dist;
+  qDebug()<<dist;
   
+  vr = -(1.0/1000) * dist -0.5; //TODO meter caso izq  y derecha
+  if(-vr < -0.5)
+    vr = -0.5;
+  
+  float v = 250 * exp(-(fabs(vr) * alpha)); //TODO gausiana  e^-||x||*a ->  despejar alpha || QLin2D
+  
+  differentialrobot_proxy->setSpeedBase(v,vr);
     
   
 }

@@ -80,7 +80,7 @@ private:
 	void movement(const TLaserData &tLaser);
 bool obstacle(TLaserData tLaser);
 void bugMovement(TLaserData ldata);
-void targetAtSight(TLaserData ldata);
+bool targetAtSight(TLaserData ldata);
 };
 
 #endif
