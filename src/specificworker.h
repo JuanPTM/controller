@@ -25,9 +25,6 @@
 
 
 
-
-
-
 #ifndef SPECIFICWORKER_H
 #define SPECIFICWORKER_H
 
@@ -35,52 +32,56 @@
 #include <innermodel/innermodel.h>
 
 
-
 class SpecificWorker : public GenericWorker
 {
-  
-struct Target{
-  mutable QMutex m;
-  QVec pose = QVec(3);
-  float angl;
-  bool active = false;
-  void setActive(bool newActive){
-    QMutexLocker lm(&m);
-    active = newActive;
-  }
-  void copy(float x, float z){
-    QMutexLocker lm(&m);
-    pose.setItem(0,x);
-    pose.setItem(1,0);
-    pose.setItem(2,z);
-  }
-  QVec getPose(){
-    QMutexLocker lm(&m);
-    return pose;
-  }
-};
+ Q_OBJECT
+ 
+  public:
+      SpecificWorker(MapPrx& mprx);	
+      ~SpecificWorker();
+      bool setParams(RoboCompCommonBehavior::ParameterList params);
+      void setPick(const Pick &mypick);
 
-enum class State{INIT,GOTO,BUG,END};
+  public slots:
+    void compute(); 	
 
-Q_OBJECT
-public:
-	SpecificWorker(MapPrx& mprx);	
-	~SpecificWorker();
-	bool setParams(RoboCompCommonBehavior::ParameterList params);
-	void setPick(const Pick &mypick);
+  private:    
+    enum class State {INIT,GOTO,BUG,END, BUGINIT};
+    struct Target
+    {
+      mutable QMutex m;
+      QVec pose = QVec::zeros(3);
+    
+      float angl;
+      bool active = false;
+      void setActive(bool newActive){
+	QMutexLocker lm(&m);
+	active = newActive;
+    }
+      void copy(float x, float z){
+	QMutexLocker lm(&m);
+	pose.setItem(0,x);
+	pose.setItem(1,0);
+	pose.setItem(2,z);
+      }
+      QVec getPose(){
+	QMutexLocker lm(&m);
+	return pose;
+      }
+    };
 
-public slots:
-	void compute(); 	
+    
+    InnerModel* innerModel;
+    State state = State::INIT;
+    Target pick;
+    void dodge(int threshold,RoboCompLaser::TLaserData ldata);
+    void movement(const TLaserData &tLaser);
+    bool obstacle(TLaserData tLaser);
+    void bugMovement( const TLaserData& ldata );
+    bool targetAtSight(TLaserData ldata);
+    void buginit( const TLaserData& ldata );
+    void stopRobot();
 
-private:
-	InnerModel* innerModel;
-	State state;
-	Target pick;
-	void dodge(int threshold,RoboCompLaser::TLaserData ldata);
-	void movement(const TLaserData &tLaser);
-bool obstacle(TLaserData tLaser);
-void bugMovement(TLaserData ldata);
-bool targetAtSight(TLaserData ldata);
 };
 
 #endif
