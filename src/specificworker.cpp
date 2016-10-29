@@ -36,7 +36,7 @@ SpecificWorker::~SpecificWorker()
 
 bool SpecificWorker::setParams ( RoboCompCommonBehavior::ParameterList params )
 {
-    innerModel= new InnerModel ( "/home/salabeta/robocomp/files/innermodel/simpleworld.xml" );
+    innerModel= new InnerModel ( "/home/juanp/robocomp/files/innermodel/simpleworld.xml" );
     timer.start ( Period );
 
     return true;
@@ -175,7 +175,7 @@ void SpecificWorker::buginit ( const TLaserData& ldata )
 
 void SpecificWorker::bugMovement ( const TLaserData &ldata )
 {
-    const float alpha = log ( 0.1 ) /log ( 0.1 ); //amortigua /corte
+    const float alpha = log ( 0.1 ) /log ( 0.3 ); //amortigua /corte
     
 //     if ( targetAtSight ( ldata ) )  //CAMBIAR POR CROSSLINE
 //     {
@@ -183,15 +183,21 @@ void SpecificWorker::bugMovement ( const TLaserData &ldata )
 // 	qDebug() << "from BUG to GOTO";
 //         return;
 //     }
+    
+    if ( obstacle (ldata) ){
+        state = State::BUGINIT;
+ 	qDebug() << "from BUG to BUGINIT";
+        return;
+    }
 
     float dist = ldata[90].dist;
     qDebug() << dist;
 
-    //vr = -( 1.0/800 ) * dist + 0.5; //TODO meter caso izq  y derecha
-    float vrot =  -((1./(1. + exp(-(dist - 400.))))-1./2.);
-    
-    float vadv = 350 * exp ( - ( fabs ( vrot ) * alpha ) ); //TODO gausiana  e^-||x||*a ->  despejar alpha || QLin2D
-
+    //vr = -( 1.0/800 ) * dist + 0.5; 
+    float vrot =  -((1./(1. + exp(-(dist - 450.))))-1./2.);
+    qDebug()<< vrot<<" rotacion";
+    float vadv = 350 * exp ( - ( fabs ( vrot ) * alpha ) ); // QLin2D
+    qDebug()<< vadv<<" avance";
     differentialrobot_proxy->setSpeedBase ( vadv ,vrot );
 
 }
@@ -243,6 +249,7 @@ void SpecificWorker::setPick ( const Pick &mypick )
     qDebug() <<mypick.x<<mypick.z;
     pick.copy ( mypick.x,mypick.z );
     pick.setActive ( true );
+    state = State::INIT;
 }
 
 
