@@ -135,6 +135,7 @@ void SpecificWorker::movement ( const TLaserData &tLaser )
 	qDebug() << "FINISH: GOTO TO INIT";
         state= State::INIT;
         differentialrobot_proxy->stopBase();
+	return;
     }
 
     if ( obstacle ( tLaser ) )
@@ -177,12 +178,12 @@ void SpecificWorker::bugMovement ( const TLaserData &ldata )
 {
     const float alpha = log ( 0.1 ) /log ( 0.3 ); //amortigua /corte
     
-//     if ( targetAtSight ( ldata ) )  //CAMBIAR POR CROSSLINE
-//     {
-//         state = State::GOTO;
-// 	qDebug() << "from BUG to GOTO";
-//         return;
-//     }
+     if ( targetAtSight ( ldata ) )  //TODO CAMBIAR POR CROSSLINE
+     {
+         state = State::GOTO;
+ 	qDebug() << "from BUG to GOTO";
+         return;
+     }
     
     if ( obstacle (ldata) ){
         state = State::BUGINIT;
@@ -190,7 +191,8 @@ void SpecificWorker::bugMovement ( const TLaserData &ldata )
         return;
     }
 
-    float dist = ldata[90].dist;
+    float dist = obstacleLeft(ldata);
+    
     qDebug() << dist;
 
     //vr = -( 1.0/800 ) * dist + 0.5; 
@@ -217,6 +219,21 @@ bool SpecificWorker::targetAtSight ( TLaserData ldata )
 
 
 //AUX
+
+
+
+float SpecificWorker::obstacleLeft(const TLaserData& tlaser)
+{
+  float min = tlaser[85].dist;
+  for(int i= 1; i<5;i++)
+  {
+    if (tlaser[85+i].dist < min)
+    {
+      min = tlaser[85+i].dist;
+    }
+  }
+  return min;
+}
 
 void SpecificWorker::stopRobot()
 {

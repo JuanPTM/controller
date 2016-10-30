@@ -81,6 +81,7 @@ class SpecificWorker : public GenericWorker
     bool targetAtSight(TLaserData ldata);
     void buginit( const TLaserData& ldata );
     void stopRobot();
+    float obstacleLeft( const TLaserData& tlaser);
 
 };
 
