@@ -74,15 +74,18 @@ class SpecificWorker : public GenericWorker
     InnerModel* innerModel;
     State state = State::INIT;
     Target pick;
+    QLine2D linea;
+    float distanciaAnterior;
     void dodge(int threshold,RoboCompLaser::TLaserData ldata);
     void movement(const TLaserData &tLaser);
     bool obstacle(TLaserData tLaser);
-    void bugMovement( const TLaserData& ldata );
+    void bugMovement( const TLaserData& ldata, const TBaseState& bState );
     bool targetAtSight(TLaserData ldata);
-    void buginit( const TLaserData& ldata );
+    void buginit( const TLaserData& ldata, const TBaseState& bState );
     void stopRobot();
     float obstacleLeft( const TLaserData& tlaser);
-
+    bool crossedLine(const TBaseState& bState);
+    
 };
 
 #endif
