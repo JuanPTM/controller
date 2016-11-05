@@ -84,7 +84,7 @@ class SpecificWorker : public GenericWorker
     void buginit( const TLaserData& ldata, const TBaseState& bState );
     void stopRobot();
     float obstacleLeft( const TLaserData& tlaser);
-    bool crossedLine(const TBaseState& bState);
+    float distanceToLine(const TBaseState& bState);
     
 };
 
