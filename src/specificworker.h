@@ -85,6 +85,10 @@ class SpecificWorker : public GenericWorker
     void stopRobot();
     float obstacleLeft( const TLaserData& tlaser);
     float distanceToLine(const TBaseState& bState);
+    virtual void go(const string &nodo, const float x, const float y, const float alpha);
+    virtual void turn(const float speed);
+    virtual bool atTarget();
+    virtual void stop();
     
 };
 

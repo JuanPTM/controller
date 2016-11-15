@@ -36,7 +36,7 @@ SpecificWorker::~SpecificWorker()
 
 bool SpecificWorker::setParams ( RoboCompCommonBehavior::ParameterList params )
 {
-    innerModel= new InnerModel ( "/home/salabeta/robocomp/files/innermodel/simpleworld.xml" );
+    innerModel= new InnerModel ( "/home/robocomp/robocomp/files/innermodel/simpleworld.xml" );
     timer.start ( Period );
 
     return true;
@@ -296,4 +296,24 @@ void SpecificWorker::setPick ( const Pick &mypick )
     pick.copy ( mypick.x,mypick.z );
     pick.setActive ( true );
     state = State::INIT;
+}
+
+void SpecificWorker::go ( const string& nodo, const float x, const float y, const float alpha )
+{
+
+}
+
+bool SpecificWorker::atTarget()
+{
+  return false;
+}
+
+void SpecificWorker::stop()
+{
+  stopRobot();
+}
+
+void SpecificWorker::turn ( const float speed )
+{
+
 }
