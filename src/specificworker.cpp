@@ -56,7 +56,7 @@ void SpecificWorker::compute()
 
         switch ( state )
         {
-        case State::INIT:
+	  case State::INIT:
 	      if ( pick.active )
 	      {
 		  qDebug() << "INIT to GOTO";
@@ -76,7 +76,7 @@ void SpecificWorker::compute()
 	      break;
 	  case State::END:
 	      break;
-	  }
+	}
     }
     catch ( const Ice::Exception &ex )
     {
@@ -300,20 +300,25 @@ void SpecificWorker::setPick ( const Pick &mypick )
 
 void SpecificWorker::go ( const string& nodo, const float x, const float y, const float alpha )
 {
-
+    qDebug()<< "GO RECEIVED" ;
+    pick.copy(x,y);
+    pick.setActive ( true );
+    state = State::INIT;
 }
 
 bool SpecificWorker::atTarget()
 {
-  return false;
+  return !pick.active;
 }
 
 void SpecificWorker::stop()
 {
+  qDebug()<< "STOP RECEIVED" ;
   stopRobot();
 }
 
 void SpecificWorker::turn ( const float speed )
 {
-
+    
+    qDebug()<< "TURN RECEIVED" ;
 }
