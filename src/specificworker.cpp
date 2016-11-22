@@ -91,7 +91,7 @@ void SpecificWorker::movement ( const TLaserData &tLaser )
     float angle = atan2 ( tr.x(),tr.z() );
     float distance = tr.norm2();
 
-    if ( distance <= 200 )
+    if ( distance <= 500 )
     {
         pick.setActive ( false );
 	qDebug() << "FINISH: GOTO TO INIT";
@@ -144,13 +144,13 @@ void SpecificWorker::bugMovement ( const TLaserData &ldata,const TBaseState &bSt
     float dist = obstacleLeft(ldata);
     float diffToline = distanceToLine(bState);
     
-    qDebug()<<diffToline;
+//    qDebug()<<diffToline;
      
     
     // COMPROBACION DE SI ESTOY EN EL TARGET
     QVec tr = innerModel->transform ( "base",pick.getPose(),"world" );
     float distance = tr.norm2();
-    if ( distance <= 200 )
+    if ( distance <= 500 )
     {
         pick.setActive ( false );
 	qDebug() << "FINISH: BUG TO INIT";
@@ -181,7 +181,7 @@ void SpecificWorker::bugMovement ( const TLaserData &ldata,const TBaseState &bSt
     float k=0.1;  // pendiente de la sigmoide
     float vrot =  -((1./(1. + exp(-k*(dist - 450.))))-1./2.);		//sigmoide para meter vrot entre -0.5 y 0.5. La k ajusta la pendiente.
     float vadv = 350 * exp ( - ( fabs ( vrot ) * alpha ) ); 		//gaussiana para amortiguar la vel. de avance en funcion de vrot
-    qDebug() << vrot << vadv;
+//    qDebug() << vrot << vadv;
 
     differentialrobot_proxy->setSpeedBase ( vadv ,vrot );
     
@@ -302,6 +302,7 @@ void SpecificWorker::go ( const string& nodo, const float x, const float y, cons
 {
     qDebug()<< "GO RECEIVED" ;
     pick.copy(x,y);
+    qDebug() <<x<<y << "HA LLEGADO GO";
     pick.setActive ( true );
     state = State::INIT;
 }
@@ -319,6 +320,6 @@ void SpecificWorker::stop()
 
 void SpecificWorker::turn ( const float speed )
 {
-    
+    differentialrobot_proxy->setSpeedBase(0,speed);
     qDebug()<< "TURN RECEIVED" ;
 }
