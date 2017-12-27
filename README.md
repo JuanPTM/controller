@@ -20,7 +20,7 @@ Same as any Robocomp component.
 ----
 Contact
 ----
-Feel free to contact with any doubt.
+Feel free to contact if you have any doubt.
 
   [1]: https://github.com/JuanPTM/supervisorPython
   [2]: https://github.com/robocomp
